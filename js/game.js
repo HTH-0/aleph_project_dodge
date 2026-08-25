@@ -35,6 +35,20 @@ class Game{
     this.ui.setBestStage(this.save.bestChallengeStage);
     this.ui.renderHistory(this.save.history);
 
+    // 효과 설정: 음소거 / 움직임 줄이기 (저장값으로 초기화 + 변경 시 즉시 반영·저장)
+    this.muted=this.save.settings.muted;
+    this.reduceMotion=this.save.settings.reduceMotion;
+    this.ui.initEffectToggles(this.save.settings,(next)=>{
+      this.muted=next.muted;
+      this.reduceMotion=next.reduceMotion;
+      this.save=Storage.saveSettings(next);
+      if(this.reduceMotion){
+        // 켜는 즉시 현재 흔들림을 멈추고 파티클 수를 줄인다.
+        this.shake=0;
+        if(this.particles.length>5)this.particles.length=5;
+      }
+    });
+
     this.resize();addEventListener("resize",()=>this.resize());
     this.ui.startButton.onclick=()=>this.start(this.ui.difficulty());
     this.ui.restartButton.onclick=()=>this.start(this.ui.difficulty());
@@ -59,14 +73,21 @@ class Game{
 
   goToMenu(){
     clearTimeout(this._stageTimer);
+    // 도전 모드 진행 중(PLAYING/PAUSED) 메뉴로 나가면, 그 시점 단계를 이어하기 지점으로 저장한다.
+    if(this.isChallenge&&(this.state==="PLAYING"||this.state==="PAUSED")){
+      const result=Storage.recordPlay({mode:"challenge",difficultyName:this.currentDifficulty.name,stage:this.challengeStage,cleared:false,score:this.score,time:this.elapsed});
+      this.save=result.data;
+      this.ui.setBestStage(this.save.bestChallengeStage);
+      this.ui.renderHistory(this.save.history);
+    }
     this.state="MENU";this.ui.showMenu();this.player.reset(this.canvas.width,this.canvas.height);this.obstacles=[];
   }
 
   start(key){
     clearTimeout(this._stageTimer);
     this.isChallenge=key==="challenge";
-    this.challengeStage=1;
-    this.currentDifficulty=this.isChallenge?challengeConfig(1):(DIFFICULTIES[key]||DIFFICULTIES.easy);
+    this.challengeStage=this.isChallenge?this.ui.challengeStartStage():1;
+    this.currentDifficulty=this.isChallenge?challengeConfig(this.challengeStage):(DIFFICULTIES[key]||DIFFICULTIES.easy);
 
     this.state="PLAYING";this.elapsed=0;this.score=0;this.spawnTimer=0;
     this.obstacles=[];this.particles=[];this.shake=0;
@@ -87,7 +108,7 @@ class Game{
       const clearedStage=this.challengeStage;
       this.challengeStage++;
       this.state="STAGE_CLEAR";
-      this.shake=10;
+      this.shake=this.reduceMotion?2:10;
       this.burst(this.player.x,this.player.y,40);
       this.ui.showStageClear(clearedStage,this.challengeStage);
       this.beep(880,.12);
@@ -95,18 +116,19 @@ class Game{
       return;
     }
 
-    this.state=clear?"CLEAR":"GAMEOVER";this.shake=18;
+    this.state=clear?"CLEAR":"GAMEOVER";this.shake=this.reduceMotion?3:18;
     this.burst(this.player.x,this.player.y,clear?50:75);
     this.beep(clear?880:120,.18);
 
     let challengeInfo=null;
     if(this.isChallenge){
-      const stagesCleared=Math.max(0,this.challengeStage-1);
-      const result=Storage.recordPlay({mode:"challenge",difficultyName:this.currentDifficulty.name,stage:stagesCleared,cleared:false,score:this.score,time:this.elapsed});
+      // 사용자가 요청한 규칙: "N단계에서 죽으면 기록은 N, 다음엔 N단계부터 이어하기"
+      const reachedStage=this.challengeStage;
+      const result=Storage.recordPlay({mode:"challenge",difficultyName:this.currentDifficulty.name,stage:reachedStage,cleared:false,score:this.score,time:this.elapsed});
       this.save=result.data;
       this.ui.setBestStage(this.save.bestChallengeStage);
       this.ui.renderHistory(this.save.history);
-      challengeInfo={stagesCleared,bestStage:this.save.bestChallengeStage};
+      challengeInfo={reachedStage,bestStage:this.save.bestChallengeStage};
     }else{
       const result=Storage.recordPlay({mode:"normal",difficultyName:this.currentDifficulty.name,stage:null,cleared:clear,score:this.score,time:this.elapsed});
       this.save=result.data;
@@ -261,9 +283,13 @@ class Game{
     this.ctx.fillStyle="#68e0ff";this.ctx.fillRect(0,h-3,w*Math.min(1,this.elapsed/GAME.DURATION),3);
   }
 
-  burst(x,y,n){for(let i=0;i<n;i++)this.particles.push(new Particle(x,y))}
+  burst(x,y,n){
+    if(this.reduceMotion)n=Math.max(1,Math.round(n*0.2));
+    for(let i=0;i<n;i++)this.particles.push(new Particle(x,y));
+  }
 
   beep(freq,duration){
+    if(this.muted)return;
     try{
       if(!this.audio)this.audio=new(window.AudioContext||window.webkitAudioContext)();
       if(this.audio.state==="suspended")this.audio.resume();
@@ -283,4 +309,6 @@ class Game{
   }
 }
 
-addEventListener("DOMContentLoaded",()=>new Game());
+// window.__gameForTest: QA 자동화 스크립트가 현재 게임 상태(점수/시간/단계 등)를
+// 읽어 검증할 수 있도록 노출. 개인정보/비밀값을 담지 않으므로 안전함.
+addEventListener("DOMContentLoaded",()=>{window.__gameForTest=new Game();});

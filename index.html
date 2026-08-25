@@ -29,7 +29,7 @@
         <div class="hud-item right">
           <small>TIME</small>
           <strong id="time">30.0s</strong>
-          <button id="pauseButton" class="pause-btn" aria-label="일시정지" title="일시정지 (ESC)">⏸</button>
+          <button id="pauseButton" class="pause-btn" aria-label="일시정지" title="일시정지 (ESC)"><span class="pause-icon"></span></button>
         </div>
       </div>
 
@@ -59,6 +59,11 @@
                 <b>도전</b><span>무한 단계 · 최고 <em id="bestStageValue">0</em>단계</span>
               </button>
             </div>
+
+            <div id="challengeStartOptions" class="challenge-start-options hidden">
+              <button class="start-mode" data-start="resume" id="resumeStageBtn">이어하기 · <b id="resumeStageValue">1</b>단계부터</button>
+              <button class="start-mode" data-start="1">처음부터 · 1단계</button>
+            </div>
           </div>
 
           <div class="section-card info-card">
@@ -67,6 +72,10 @@
               <div><b>MOVE</b><span>W A S D / 방향키</span></div>
               <div><b>GOAL</b><span>30초 생존</span></div>
               <div><b>HITBOX</b><span>중앙의 작은 원</span></div>
+            </div>
+            <div class="effects-row">
+              <label class="effect-toggle"><input type="checkbox" id="muteToggle"><span>🔇 음소거</span></label>
+              <label class="effect-toggle"><input type="checkbox" id="motionToggle"><span>🌀 움직임 줄이기</span></label>
             </div>
           </div>
 

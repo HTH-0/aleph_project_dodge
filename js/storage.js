@@ -1,10 +1,11 @@
 // 저장 기능: 로그인/인증 없이 브라우저 localStorage만 사용.
-// - bestChallengeStage: 도전 모드에서 클리어한 최고 단계
+// - bestChallengeStage: 도전 모드에서 도달한 최고 단계(이어하기 시작점으로도 사용)
 // - history: 최근 플레이 기록(최대 20개). 개인정보/비밀값은 저장하지 않음.
+// - settings: 음소거/움직임 줄이기 등 효과 설정
 const STORAGE_KEY = "dodge_save_v1";
 
 function defaultSave(){
-  return { version: 1, bestChallengeStage: 0, history: [] };
+  return { version: 1, bestChallengeStage: 0, history: [], settings: { muted: false, reduceMotion: false } };
 }
 
 function isValidHistoryEntry(e){
@@ -29,8 +30,12 @@ const Storage = {
         ? Math.max(0, Math.floor(data.bestChallengeStage)) : 0;
       const history = Array.isArray(data.history)
         ? data.history.filter(isValidHistoryEntry).slice(-20) : [];
+      const settings = {
+        muted: !!(data.settings && data.settings.muted),
+        reduceMotion: !!(data.settings && data.settings.reduceMotion)
+      };
 
-      return { version: 1, bestChallengeStage, history };
+      return { version: 1, bestChallengeStage, history, settings };
     }catch(e){
       // JSON 파싱 실패 등 손상된 저장값 -> 기본값으로 안전하게 복구
       return defaultSave();
@@ -46,7 +51,8 @@ const Storage = {
     }
   },
 
-  // 한 판이 끝날 때 호출. 기록을 남기고, 도전 모드면 최고 단계 갱신 여부를 반환한다.
+  // 한 판이 끝나거나(사망) 도전 모드 중간에 나갈 때 호출.
+  // stage는 "그 시점에 도전 중이던 단계"(이어하기 시작점) 기준으로 저장한다.
   recordPlay({mode, difficultyName, stage, cleared, score, time}){
     const data = this.load();
 
@@ -69,5 +75,12 @@ const Storage = {
 
     this.save(data);
     return { data, isNewBest };
+  },
+
+  saveSettings(settings){
+    const data = this.load();
+    data.settings = { muted: !!settings.muted, reduceMotion: !!settings.reduceMotion };
+    this.save(data);
+    return data;
   }
 };

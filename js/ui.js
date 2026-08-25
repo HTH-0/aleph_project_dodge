@@ -12,11 +12,36 @@ class UI{
     this.bestStageValue=document.getElementById("bestStageValue");
     this.historyList=document.getElementById("historyList");
     this.stageToast=document.getElementById("stageClearToast");this.stageToastText=document.getElementById("stageClearText");
+
+    // 도전 모드: 이어하기 / 처음부터
+    this.challengeStartOptions=document.getElementById("challengeStartOptions");
+    this.resumeStageBtn=document.getElementById("resumeStageBtn");this.resumeStageValue=document.getElementById("resumeStageValue");
+    this.startModeButtons=[...document.querySelectorAll(".start-mode")];
+    this.startMode="resume"; // "resume" | "1"
+    this.bestStage=0;
+    this.startModeButtons.forEach(b=>b.onclick=()=>{
+      this.startMode=b.dataset.start;
+      this.startModeButtons.forEach(x=>x.classList.toggle("active",x===b));
+    });
+    this.startModeButtons.forEach(b=>b.classList.toggle("active", b.dataset.start===this.startMode));
+
+    // 효과 설정: 음소거 / 움직임 줄이기
+    this.muteToggle=document.getElementById("muteToggle");this.motionToggle=document.getElementById("motionToggle");
+
     this.selected="easy";
     this.buttons=[...document.querySelectorAll(".difficulty")];
-    this.buttons.forEach(b=>b.onclick=()=>{this.selected=b.dataset.difficulty;this.buttons.forEach(x=>x.classList.toggle("active",x===b))});
+    this.buttons.forEach(b=>b.onclick=()=>{
+      this.selected=b.dataset.difficulty;
+      this.buttons.forEach(x=>x.classList.toggle("active",x===b));
+      this.challengeStartOptions.classList.toggle("hidden", this.selected!=="challenge" || this.bestStage<1);
+    });
   }
   difficulty(){return this.selected}
+
+  // 도전 모드 시작 단계: 이어하기 선택 시 저장된 최고(=이어하기) 단계, 아니면 1단계
+  challengeStartStage(){
+    return this.startMode==="resume" ? Math.max(1,this.bestStage) : 1;
+  }
 
   showPlaying(name,isChallenge,stage){
     this.start.classList.add("hidden");this.result.classList.add("hidden");this.pause.classList.add("hidden");this.hud.classList.remove("hidden");
@@ -39,7 +64,7 @@ class UI{
 
     if(challengeInfo){
       this.challengeNote.classList.remove("hidden");
-      this.challengeStageText.textContent=challengeInfo.stagesCleared;
+      this.challengeStageText.textContent=challengeInfo.reachedStage;
       this.challengeBestText.textContent=challengeInfo.bestStage;
     }else{
       this.challengeNote.classList.add("hidden");
@@ -58,8 +83,13 @@ class UI{
 
   update(score,time){this.score.textContent=Math.floor(score).toLocaleString();this.time.textContent=Math.max(0,30-time).toFixed(1)+"s"}
 
-  // 저장 기능: 도전 모드 최고 단계 배지 갱신
-  setBestStage(stage){this.bestStageValue.textContent=stage}
+  // 저장 기능: 도전 모드 최고(=이어하기 시작) 단계 배지 갱신
+  setBestStage(stage){
+    this.bestStage=stage;
+    this.bestStageValue.textContent=stage;
+    this.resumeStageValue.textContent=stage>=1?stage:1;
+    if(this.selected==="challenge")this.challengeStartOptions.classList.toggle("hidden", stage<1);
+  }
 
   // 저장 기능: 최근 플레이 기록 렌더링 (개인정보 없이 결과/점수/시간만 표시)
   renderHistory(history){
@@ -79,5 +109,13 @@ class UI{
       li.innerHTML=`<span>${label}</span><b>${resultText}</b><span>${h.score.toLocaleString()}점 · ${h.time.toFixed(1)}s</span>`;
       this.historyList.appendChild(li);
     }
+  }
+
+  // 효과 설정: 저장된 값으로 체크박스 초기화 (화면에 즉시 반영)
+  initEffectToggles(settings,onChange){
+    this.muteToggle.checked=!!settings.muted;
+    this.motionToggle.checked=!!settings.reduceMotion;
+    this.muteToggle.onchange=()=>onChange({muted:this.muteToggle.checked,reduceMotion:this.motionToggle.checked});
+    this.motionToggle.onchange=()=>onChange({muted:this.muteToggle.checked,reduceMotion:this.motionToggle.checked});
   }
 }

@@ -16,6 +16,7 @@ canvas{display:block;width:100%;height:100%}
 
 .pause-btn{pointer-events:auto;margin-top:5px;width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:rgba(255,255,255,.08);color:var(--text);cursor:pointer;font-size:12px;line-height:1;display:grid;place-items:center;transition:.15s}
 .pause-btn:hover{background:rgba(104,224,255,.18);border-color:var(--accent)}
+.pause-icon{display:block;width:10px;height:12px;background:linear-gradient(90deg,currentColor 28%,transparent 28%,transparent 66%,currentColor 66%)}
 
 .stage-toast{position:absolute;left:50%;top:38%;z-index:4;transform:translate(-50%,-50%);padding:14px 30px;background:rgba(8,14,24,.88);border:1px solid rgba(104,224,255,.4);border-radius:12px;font-weight:900;letter-spacing:.12em;font-size:14px;color:var(--accent);box-shadow:0 0 30px rgba(104,224,255,.25);pointer-events:none;transition:opacity .2s}
 .stage-toast.hidden{opacity:0;visibility:hidden}
@@ -41,6 +42,18 @@ h2{font-size:clamp(34px,6vw,52px);letter-spacing:.05em;margin-bottom:10px}.panel
 .difficulty.challenge.active{border-color:#ff9f66;background:rgba(255,159,102,.1);box-shadow:0 0 18px rgba(255,159,102,.12)}
 .difficulty.challenge.active b{color:#ff9f66}
 .difficulty.challenge em{font-style:normal;color:#ff9f66;font-weight:800}
+
+.challenge-start-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.challenge-start-options.hidden{display:none}
+.start-mode{padding:9px 6px;font-size:10px;font-weight:800;color:var(--muted);background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;cursor:pointer}
+.start-mode b{color:#ff9f66}
+.start-mode.active{border-color:#ff9f66;background:rgba(255,159,102,.1);color:#ffcda6}
+.start-mode.active b{color:#ffcda6}
+
+.effects-row{display:flex;gap:14px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.effect-toggle{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);cursor:pointer;user-select:none}
+.effect-toggle input{accent-color:var(--accent);width:14px;height:14px;cursor:pointer}
+.effect-toggle:has(input:checked){color:var(--accent)}
 
 .tips{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0}
 .tips div,.result-grid div{padding:11px 7px;background:rgba(255,255,255,.035);border:1px solid var(--border);border-radius:10px}
