@@ -7,6 +7,18 @@ const DIFFICULTIES={
   hard:{name:"어려움",initialObstacles:8,speedMultiplier:1.55,spawnInterval:.50}
 };
 
+// 도전 모드: "어려움"을 기준으로 단계(stage)가 오를수록 계속 어려워진다.
+function challengeConfig(stage){
+  const base=DIFFICULTIES.hard;
+  const growth=Math.max(0,stage-1);
+  return{
+    name:`도전 ${stage}단계`,
+    initialObstacles:Math.min(20,base.initialObstacles+Math.floor(growth*0.8)),
+    speedMultiplier:base.speedMultiplier+growth*0.10,
+    spawnInterval:Math.max(0.22,base.spawnInterval-growth*0.018)
+  };
+}
+
 class Game{
   constructor(){
     this.canvas=document.getElementById("gameCanvas");this.ctx=this.canvas.getContext("2d");
@@ -14,10 +26,27 @@ class Game{
     this.state="MENU";this.obstacles=[];this.particles=[];this.elapsed=0;this.score=0;
     this.spawnTimer=0;this.spawnInterval=.8;this.shake=0;this.last=performance.now();this.audio=null;
     this.currentDifficulty=DIFFICULTIES.easy;
+
+    // 도전 모드 상태
+    this.isChallenge=false;this.challengeStage=1;this._stageTimer=null;
+
+    // 저장된 기록 불러오기 (손상/누락 시 storage.js가 기본값 반환)
+    this.save=Storage.load();
+    this.ui.setBestStage(this.save.bestChallengeStage);
+    this.ui.renderHistory(this.save.history);
+
     this.resize();addEventListener("resize",()=>this.resize());
     this.ui.startButton.onclick=()=>this.start(this.ui.difficulty());
     this.ui.restartButton.onclick=()=>this.start(this.ui.difficulty());
-    this.ui.menuButton.onclick=()=>{this.state="MENU";this.ui.showMenu();this.player.reset(this.canvas.width,this.canvas.height);this.obstacles=[]};
+    this.ui.menuButton.onclick=()=>this.goToMenu();
+
+    // 일시정지 컨트롤
+    this.ui.pauseButton.onclick=()=>this.togglePause();
+    this.ui.resumeButton.onclick=()=>this.resume();
+    this.ui.pauseMenuButton.onclick=()=>this.goToMenu();
+    addEventListener("keydown",e=>{if(e.code==="Escape")this.togglePause()});
+    addEventListener("blur",()=>{if(this.state==="PLAYING")this.pause()});
+
     requestAnimationFrame(t=>this.loop(t));
   }
 
@@ -28,13 +57,22 @@ class Game{
     else{this.player.x*=this.canvas.width/ow;this.player.y*=this.canvas.height/oh}
   }
 
+  goToMenu(){
+    clearTimeout(this._stageTimer);
+    this.state="MENU";this.ui.showMenu();this.player.reset(this.canvas.width,this.canvas.height);this.obstacles=[];
+  }
+
   start(key){
-    this.currentDifficulty=DIFFICULTIES[key]||DIFFICULTIES.easy;
+    clearTimeout(this._stageTimer);
+    this.isChallenge=key==="challenge";
+    this.challengeStage=1;
+    this.currentDifficulty=this.isChallenge?challengeConfig(1):(DIFFICULTIES[key]||DIFFICULTIES.easy);
+
     this.state="PLAYING";this.elapsed=0;this.score=0;this.spawnTimer=0;
     this.obstacles=[];this.particles=[];this.shake=0;
     this.player.reset(this.canvas.width,this.canvas.height);
     this.spawnInterval=this.currentDifficulty.spawnInterval;
-    this.ui.showPlaying(this.currentDifficulty.name);
+    this.ui.showPlaying(this.currentDifficulty.name,this.isChallenge,this.challengeStage);
     this.initialSpawn();
     this.beep(520,.07);
   }
@@ -44,16 +82,74 @@ class Game{
   }
 
   end(clear){
+    // 도전 모드에서 30초를 버티면 종료하지 않고 다음 단계로 자동 진행한다.
+    if(clear&&this.isChallenge){
+      const clearedStage=this.challengeStage;
+      this.challengeStage++;
+      this.state="STAGE_CLEAR";
+      this.shake=10;
+      this.burst(this.player.x,this.player.y,40);
+      this.ui.showStageClear(clearedStage,this.challengeStage);
+      this.beep(880,.12);
+      this._stageTimer=setTimeout(()=>this.nextChallengeStage(),1100);
+      return;
+    }
+
     this.state=clear?"CLEAR":"GAMEOVER";this.shake=18;
     this.burst(this.player.x,this.player.y,clear?50:75);
-    this.ui.showResult(clear,this.score,this.elapsed,this.currentDifficulty.name);
     this.beep(clear?880:120,.18);
+
+    let challengeInfo=null;
+    if(this.isChallenge){
+      const stagesCleared=Math.max(0,this.challengeStage-1);
+      const result=Storage.recordPlay({mode:"challenge",difficultyName:this.currentDifficulty.name,stage:stagesCleared,cleared:false,score:this.score,time:this.elapsed});
+      this.save=result.data;
+      this.ui.setBestStage(this.save.bestChallengeStage);
+      this.ui.renderHistory(this.save.history);
+      challengeInfo={stagesCleared,bestStage:this.save.bestChallengeStage};
+    }else{
+      const result=Storage.recordPlay({mode:"normal",difficultyName:this.currentDifficulty.name,stage:null,cleared:clear,score:this.score,time:this.elapsed});
+      this.save=result.data;
+      this.ui.renderHistory(this.save.history);
+    }
+
+    this.ui.showResult(clear,this.score,this.elapsed,this.currentDifficulty.name,challengeInfo);
+  }
+
+  nextChallengeStage(){
+    this.ui.hideStageClear();
+    this.state="PLAYING";
+    this.elapsed=0;this.spawnTimer=0;this.obstacles=[];this.particles=[];
+    this.player.reset(this.canvas.width,this.canvas.height);
+    this.currentDifficulty=challengeConfig(this.challengeStage);
+    this.spawnInterval=this.currentDifficulty.spawnInterval;
+    this.ui.showPlaying(this.currentDifficulty.name,true,this.challengeStage);
+    this.initialSpawn();
+    this.last=performance.now();
+  }
+
+  // 일시정지: ESC 또는 화면(탭) 이탈 시 진행 상태를 멈춘다. 재개 전까지 시간/장애물/점수는 그대로 유지된다.
+  pause(){
+    if(this.state!=="PLAYING")return;
+    this.state="PAUSED";
+    this.input.keys.clear();
+    this.ui.showPause();
+  }
+  resume(){
+    if(this.state!=="PAUSED")return;
+    this.state="PLAYING";
+    this.last=performance.now();
+    this.ui.hidePause();
+  }
+  togglePause(){
+    if(this.state==="PLAYING")this.pause();
+    else if(this.state==="PAUSED")this.resume();
   }
 
   difficulty(){
     const p=Math.min(1,this.elapsed/GAME.DURATION);
     const base=this.currentDifficulty.spawnInterval;
-    this.spawnInterval=Math.max(.25,base-(base-.25)*p);
+    this.spawnInterval=Math.max(.2,base-(base-.2)*p);
   }
 
   spawn(){
@@ -91,7 +187,8 @@ class Game{
     if(this.state!=="PLAYING")return;
 
     this.elapsed+=dt;
-    this.score=Math.min(3000,this.elapsed*100);
+    this.score+=dt*100;
+    if(!this.isChallenge)this.score=Math.min(3000,this.score);
     this.difficulty();
     this.player.update(dt,this.input,this.canvas.width,this.canvas.height);
 
@@ -136,7 +233,7 @@ class Game{
     this.player.draw(this.ctx,t);
 
     this.ctx.restore();
-    if(this.state==="PLAYING")this.progress();
+    if(this.state==="PLAYING"||this.state==="PAUSED")this.progress();
   }
 
   background(t){

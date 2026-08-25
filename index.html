@@ -29,7 +29,12 @@
         <div class="hud-item right">
           <small>TIME</small>
           <strong id="time">30.0s</strong>
+          <button id="pauseButton" class="pause-btn" aria-label="일시정지" title="일시정지 (ESC)">⏸</button>
         </div>
+      </div>
+
+      <div id="stageClearToast" class="stage-toast hidden">
+        <span id="stageClearText">STAGE 1 CLEAR!</span>
       </div>
 
       <div id="startScreen" class="overlay">
@@ -38,25 +43,51 @@
           <h1>DODGE</h1>
           <p>난이도를 선택하고 30초 동안 탄막을 피하세요.</p>
 
-          <div class="difficulty-select">
-            <button class="difficulty active" data-difficulty="easy">
-              <b>쉬움</b><span>기본 속도 · 3개</span>
-            </button>
-            <button class="difficulty" data-difficulty="normal">
-              <b>보통</b><span>빠른 탄막 · 5개</span>
-            </button>
-            <button class="difficulty" data-difficulty="hard">
-              <b>어려움</b><span>고속 탄막 · 8개</span>
-            </button>
+          <div class="section-card difficulty-card">
+            <div class="section-title">난이도 선택</div>
+            <div class="difficulty-select">
+              <button class="difficulty active" data-difficulty="easy">
+                <b>쉬움</b><span>기본 속도 · 3개</span>
+              </button>
+              <button class="difficulty" data-difficulty="normal">
+                <b>보통</b><span>빠른 탄막 · 5개</span>
+              </button>
+              <button class="difficulty" data-difficulty="hard">
+                <b>어려움</b><span>고속 탄막 · 8개</span>
+              </button>
+              <button class="difficulty challenge" data-difficulty="challenge">
+                <b>도전</b><span>무한 단계 · 최고 <em id="bestStageValue">0</em>단계</span>
+              </button>
+            </div>
           </div>
 
-          <div class="tips">
-            <div><b>MOVE</b><span>W A S D / 방향키</span></div>
-            <div><b>GOAL</b><span>30초 생존</span></div>
-            <div><b>HITBOX</b><span>중앙의 작은 원</span></div>
+          <div class="section-card info-card">
+            <div class="section-title">조작 안내</div>
+            <div class="tips">
+              <div><b>MOVE</b><span>W A S D / 방향키</span></div>
+              <div><b>GOAL</b><span>30초 생존</span></div>
+              <div><b>HITBOX</b><span>중앙의 작은 원</span></div>
+            </div>
           </div>
+
+          <details class="history-card">
+            <summary>최근 기록 보기</summary>
+            <ul id="historyList" class="history-list">
+              <li class="history-empty">아직 플레이 기록이 없습니다.</li>
+            </ul>
+          </details>
 
           <button id="startButton" class="primary">GAME START</button>
+        </div>
+      </div>
+
+      <div id="pauseScreen" class="overlay hidden">
+        <div class="panel">
+          <div class="eyebrow">PAUSED</div>
+          <h2>일시정지</h2>
+          <p>ESC 키 또는 재개 버튼으로 계속할 수 있습니다.</p>
+          <button id="resumeButton" class="primary">RESUME</button>
+          <button id="pauseMenuButton" class="secondary">메뉴로 나가기</button>
         </div>
       </div>
 
@@ -70,6 +101,10 @@
             <div><small>SCORE</small><strong id="finalScore">0</strong></div>
             <div><small>SURVIVAL</small><strong id="finalTime">0.0s</strong></div>
           </div>
+          <div id="challengeResultNote" class="challenge-note hidden">
+            <span>도달 단계 <b id="challengeStageText">1</b>단계</span>
+            <span id="challengeBestBadge">최고 기록 <b id="challengeBestText">1</b>단계</span>
+          </div>
           <button id="restartButton" class="primary">RESTART</button>
           <button id="menuButton" class="secondary">난이도 다시 선택</button>
         </div>
@@ -78,11 +113,12 @@
 
     <footer class="footer">
       <span>WASD / ARROW KEYS TO MOVE</span>
-      <span>30 SEC · 1 LIFE</span>
+      <span>ESC 또는 화면 이탈 시 일시정지</span>
     </footer>
   </section>
 </main>
 
+<script src="js/storage.js"></script>
 <script src="js/input.js"></script>
 <script src="js/player.js"></script>
 <script src="js/obstacle.js"></script>

@@ -8,26 +8,61 @@ button{font:inherit}.page{min-height:100vh;display:grid;place-items:center;paddi
 .goal,.footer{font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--muted)}
 .game-wrap{position:relative;aspect-ratio:16/9;overflow:hidden;border-radius:18px;border:1px solid var(--border);background:#07101b;box-shadow:0 25px 90px rgba(0,0,0,.5)}
 canvas{display:block;width:100%;height:100%}
-.hud{position:absolute;left:0;right:0;top:0;display:grid;grid-template-columns:1fr auto 1fr;align-items:start;padding:18px 22px;pointer-events:none}
-.hud-item{display:flex;flex-direction:column;gap:3px;text-shadow:0 2px 12px #000}.hud-item.right{text-align:right}
+.hud{position:absolute;left:0;right:0;top:0;z-index:3;display:grid;grid-template-columns:1fr auto 1fr;align-items:start;padding:18px 22px;pointer-events:none}
+.hud-item{display:flex;flex-direction:column;gap:3px;text-shadow:0 2px 12px #000}.hud-item.right{text-align:right;align-items:flex-end}
 .hud small,.hud-center small{font-size:9px;letter-spacing:.14em;color:#91a4bd;font-weight:800}
 .hud strong{font-size:22px;letter-spacing:.04em}.hud-center{text-align:center;display:flex;flex-direction:column;gap:2px}
 .hud-center strong{font-size:12px;color:var(--accent)}.hud.hidden{display:none}
-.overlay{position:absolute;inset:0;display:grid;place-items:center;background:rgba(3,6,12,.58);backdrop-filter:blur(5px);transition:.2s}
+
+.pause-btn{pointer-events:auto;margin-top:5px;width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:rgba(255,255,255,.08);color:var(--text);cursor:pointer;font-size:12px;line-height:1;display:grid;place-items:center;transition:.15s}
+.pause-btn:hover{background:rgba(104,224,255,.18);border-color:var(--accent)}
+
+.stage-toast{position:absolute;left:50%;top:38%;z-index:4;transform:translate(-50%,-50%);padding:14px 30px;background:rgba(8,14,24,.88);border:1px solid rgba(104,224,255,.4);border-radius:12px;font-weight:900;letter-spacing:.12em;font-size:14px;color:var(--accent);box-shadow:0 0 30px rgba(104,224,255,.25);pointer-events:none;transition:opacity .2s}
+.stage-toast.hidden{opacity:0;visibility:hidden}
+
+.overlay{position:absolute;inset:0;z-index:2;display:grid;place-items:center;background:rgba(3,6,12,.58);backdrop-filter:blur(5px);transition:.2s}
 .overlay.hidden{opacity:0;visibility:hidden;pointer-events:none}
 .panel{width:min(500px,calc(100% - 32px));padding:36px;text-align:center;background:rgba(15,23,38,.94);border:1px solid rgba(104,224,255,.2);border-radius:20px;box-shadow:0 20px 70px rgba(0,0,0,.45),0 0 45px rgba(104,224,255,.06)}
 .eyebrow{font-size:10px;font-weight:900;letter-spacing:.2em;color:var(--accent);margin-bottom:9px}
 h1{font-size:clamp(48px,8vw,76px);line-height:1;letter-spacing:.08em;margin-bottom:13px;text-shadow:0 0 25px rgba(104,224,255,.4)}
 h2{font-size:clamp(34px,6vw,52px);letter-spacing:.05em;margin-bottom:10px}.panel p{color:var(--muted);font-size:14px;line-height:1.6}
-.difficulty-select{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:22px 0 10px}
-.difficulty{padding:13px 7px;background:rgba(255,255,255,.035);color:var(--muted);border:1px solid var(--border);border-radius:10px;cursor:pointer}
+/* 난이도 선택 영역과 조작 안내 영역을 시각적으로 분리된 카드로 구성 */
+.section-card{background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:14px;padding:14px;margin:14px 0;text-align:left}
+.section-title{font-size:10px;font-weight:900;letter-spacing:.14em;color:var(--accent);margin-bottom:10px;text-transform:uppercase}
+.difficulty-card{border-left:3px solid var(--accent)}
+.info-card{border-left:3px solid rgba(255,255,255,.25)}
+.info-card .section-title{color:#c7d4e6}
+
+.difficulty-select{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0}
+.difficulty{padding:13px 6px;background:rgba(255,255,255,.035);color:var(--muted);border:1px solid var(--border);border-radius:10px;cursor:pointer}
 .difficulty b,.difficulty span{display:block}.difficulty b{font-size:14px;color:#dbe9f5;margin-bottom:5px}.difficulty span{font-size:9px}
 .difficulty.active{border-color:var(--accent);background:rgba(104,224,255,.09);box-shadow:0 0 18px rgba(104,224,255,.1)}.difficulty.active b{color:var(--accent)}
-.tips{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 22px}
+.difficulty.challenge{border-color:rgba(255,159,102,.35)}
+.difficulty.challenge.active{border-color:#ff9f66;background:rgba(255,159,102,.1);box-shadow:0 0 18px rgba(255,159,102,.12)}
+.difficulty.challenge.active b{color:#ff9f66}
+.difficulty.challenge em{font-style:normal;color:#ff9f66;font-weight:800}
+
+.tips{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0}
 .tips div,.result-grid div{padding:11px 7px;background:rgba(255,255,255,.035);border:1px solid var(--border);border-radius:10px}
 .tips b,.result-grid small{display:block;color:var(--accent);font-size:9px;letter-spacing:.12em;margin-bottom:6px}.tips span{font-size:10px;color:var(--muted)}
+
+/* 기록(저장) 패널 */
+.history-card{margin:14px 0;text-align:left}
+.history-card summary{cursor:pointer;font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.06em;padding:6px 2px;outline:none}
+.history-card summary:hover{color:var(--text)}
+.history-list{list-style:none;margin-top:8px;display:flex;flex-direction:column;gap:6px;max-height:150px;overflow-y:auto}
+.history-list li{display:flex;justify-content:space-between;gap:8px;font-size:11px;padding:8px 10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;color:var(--muted)}
+.history-list li b{color:var(--text);font-weight:800}
+.history-list li.win b{color:#7cf5b0}
+.history-list li.lose b{color:#ff8e8e}
+.history-empty{font-size:11px;color:var(--muted);padding:6px 2px;background:none!important;border:0!important}
+
+/* 도전 결과 배지 */
+.challenge-note{display:flex;justify-content:space-between;gap:8px;margin:-8px 0 18px;padding:10px 12px;background:rgba(255,159,102,.08);border:1px solid rgba(255,159,102,.3);border-radius:10px;font-size:11px;color:#ffcda6}
+.challenge-note b{color:#ff9f66;font-size:13px}
+.challenge-note.hidden{display:none}
 button.primary{width:100%;border:0;border-radius:10px;padding:15px;background:var(--accent);color:#041017;font-weight:900;letter-spacing:.12em;cursor:pointer;box-shadow:0 0 25px rgba(104,224,255,.3);transition:.15s}
 button.primary:hover{transform:translateY(-2px);box-shadow:0 0 35px rgba(104,224,255,.55)}button.primary:active{transform:translateY(1px)}
 button.secondary{width:100%;margin-top:8px;padding:11px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:9px;cursor:pointer}
 .result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:22px 0}.result-grid strong{font-size:20px}.footer{display:flex;justify-content:space-between;margin-top:9px}
-@media(max-width:600px){.page{padding:10px}.game-wrap{aspect-ratio:4/3;border-radius:12px}.goal{display:none}.panel{padding:28px 18px}.difficulty-select,.tips{grid-template-columns:1fr}.hud{padding:12px 14px}.hud-center{display:none}.hud strong{font-size:18px}.footer{font-size:8px}}
+@media(max-width:600px){.page{padding:10px}.game-wrap{aspect-ratio:4/3;border-radius:12px}.goal{display:none}.panel{padding:28px 18px}.difficulty-select{grid-template-columns:repeat(2,1fr)}.tips{grid-template-columns:1fr}.hud{padding:12px 14px}.hud-center{display:none}.hud strong{font-size:18px}.footer{font-size:8px}.section-card{padding:12px}}
