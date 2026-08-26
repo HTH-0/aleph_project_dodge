@@ -49,6 +49,13 @@ class Game{
       }
     });
 
+    // 캐릭터 커스터마이즈: 프리셋 선택 또는 직접 그리기 -> 즉시 반영 + 저장
+    this.customizer=new Customizer(this.save.appearance,(appearance)=>{
+      this.save=Storage.saveAppearance(appearance);
+      this.player.setSkin(this.customizer.currentSkin());
+    });
+    this.player.setSkin(this.customizer.currentSkin());
+
     this.resize();addEventListener("resize",()=>this.resize());
     this.ui.startButton.onclick=()=>this.start(this.ui.difficulty());
     this.ui.restartButton.onclick=()=>this.start(this.ui.difficulty());

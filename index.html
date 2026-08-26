@@ -66,16 +66,42 @@
             </div>
           </div>
 
-          <div class="section-card info-card">
-            <div class="section-title">조작 안내</div>
-            <div class="tips">
-              <div><b>MOVE</b><span>W A S D / 방향키</span></div>
-              <div><b>GOAL</b><span>30초 생존</span></div>
-              <div><b>HITBOX</b><span>중앙의 작은 원</span></div>
+          <div class="section-card customize-card">
+            <button type="button" class="section-title collapsible-toggle" data-target="customizeBody">
+              캐릭터 커스터마이즈 <span class="chevron">▾</span>
+            </button>
+            <div id="customizeBody" class="collapsible-content">
+              <div class="skin-status" id="skinStatusText">현재 캐릭터: 시안 프리셋</div>
+              <div class="skin-preset-row" id="skinPresetRow"></div>
+              <div class="skin-editor">
+                <canvas id="skinEditorCanvas" width="176" height="176"></canvas>
+                <div class="skin-editor-side">
+                  <div class="skin-palette-row" id="skinPaletteRow"></div>
+                  <div class="skin-editor-buttons">
+                    <button type="button" id="skinClearBtn" class="skin-btn">지우기</button>
+                    <button type="button" id="skinResetBtn" class="skin-btn">기본형으로</button>
+                    <button type="button" id="skinApplyBtn" class="skin-btn primary-mini">이 캐릭터 사용</button>
+                  </div>
+                  <p class="skin-hint">도화지를 클릭·드래그해서 직접 그려도 되고, 위 색상 중 하나를 선택해도 됩니다. 히트박스(원)는 항상 동일하게 표시됩니다. 아무것도 선택하지 않으면 기본(시안) 캐릭터로 바로 플레이됩니다.</p>
+                </div>
+              </div>
             </div>
-            <div class="effects-row">
-              <label class="effect-toggle"><input type="checkbox" id="muteToggle"><span>🔇 음소거</span></label>
-              <label class="effect-toggle"><input type="checkbox" id="motionToggle"><span>🌀 움직임 줄이기</span></label>
+          </div>
+
+          <div class="section-card info-card">
+            <button type="button" class="section-title collapsible-toggle" data-target="infoBody">
+              조작 안내 <span class="chevron">▾</span>
+            </button>
+            <div id="infoBody" class="collapsible-content">
+              <div class="tips">
+                <div><b>MOVE</b><span>W A S D / 방향키</span></div>
+                <div><b>GOAL</b><span>30초 생존</span></div>
+                <div><b>HITBOX</b><span>중앙의 작은 원</span></div>
+              </div>
+              <div class="effects-row">
+                <label class="effect-toggle"><input type="checkbox" id="muteToggle"><span>🔇 음소거</span></label>
+                <label class="effect-toggle"><input type="checkbox" id="motionToggle"><span>🌀 움직임 줄이기</span></label>
+              </div>
             </div>
           </div>
 
@@ -133,6 +159,8 @@
 <script src="js/obstacle.js"></script>
 <script src="js/particle.js"></script>
 <script src="js/ui.js"></script>
+<script src="js/customize.js"></script>
+<script src="js/collapsible.js"></script>
 <script src="js/game.js"></script>
 </body>
 </html>

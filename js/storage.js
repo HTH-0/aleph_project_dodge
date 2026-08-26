@@ -2,10 +2,16 @@
 // - bestChallengeStage: 도전 모드에서 도달한 최고 단계(이어하기 시작점으로도 사용)
 // - history: 최근 플레이 기록(최대 20개). 개인정보/비밀값은 저장하지 않음.
 // - settings: 음소거/움직임 줄이기 등 효과 설정
+// - appearance: 캐릭터 외형(프리셋 색상 또는 직접 그린 픽셀 그림)
 const STORAGE_KEY = "dodge_save_v1";
+const SKIN_GRID_SIZE = 8;
 
 function defaultSave(){
-  return { version: 1, bestChallengeStage: 0, history: [], settings: { muted: false, reduceMotion: false } };
+  return {
+    version: 1, bestChallengeStage: 0, history: [],
+    settings: { muted: false, reduceMotion: false },
+    appearance: { type: "preset", presetId: "cyan", pixels: null }
+  };
 }
 
 function isValidHistoryEntry(e){
@@ -15,6 +21,26 @@ function isValidHistoryEntry(e){
     && typeof e.cleared === "boolean"
     && Number.isFinite(e.score)
     && Number.isFinite(e.time);
+}
+
+function isValidPixelCell(c){
+  return c === null || (typeof c === "string" && /^#[0-9a-fA-F]{3,8}$/.test(c));
+}
+
+function sanitizeAppearance(a){
+  const fallback = { type: "preset", presetId: "cyan", pixels: null };
+  if(!a || typeof a !== "object") return fallback;
+
+  if(a.type === "custom"){
+    const total = SKIN_GRID_SIZE * SKIN_GRID_SIZE;
+    if(Array.isArray(a.pixels) && a.pixels.length === total && a.pixels.every(isValidPixelCell)){
+      return { type: "custom", presetId: "cyan", pixels: a.pixels.slice() };
+    }
+    return fallback; // 손상된 픽셀 데이터 -> 기본값
+  }
+
+  const presetId = typeof a.presetId === "string" ? a.presetId : "cyan";
+  return { type: "preset", presetId, pixels: null };
 }
 
 const Storage = {
@@ -34,8 +60,9 @@ const Storage = {
         muted: !!(data.settings && data.settings.muted),
         reduceMotion: !!(data.settings && data.settings.reduceMotion)
       };
+      const appearance = sanitizeAppearance(data.appearance);
 
-      return { version: 1, bestChallengeStage, history, settings };
+      return { version: 1, bestChallengeStage, history, settings, appearance };
     }catch(e){
       // JSON 파싱 실패 등 손상된 저장값 -> 기본값으로 안전하게 복구
       return defaultSave();
@@ -80,6 +107,13 @@ const Storage = {
   saveSettings(settings){
     const data = this.load();
     data.settings = { muted: !!settings.muted, reduceMotion: !!settings.reduceMotion };
+    this.save(data);
+    return data;
+  },
+
+  saveAppearance(appearance){
+    const data = this.load();
+    data.appearance = sanitizeAppearance(appearance);
     this.save(data);
     return data;
   }
